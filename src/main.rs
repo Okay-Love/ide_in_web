@@ -1,18 +1,33 @@
-use std::io::prelude::*;
-use std::net::TcpStream;
-use std::net::TcpListener;
 use std::fs::File;
+use std::io::prelude::*;
+use std::net::TcpListener;
+use std::net::TcpStream;
 
+enum ReqType {
+    GET,
+    POST,
+    UNKNOWN,
+}
 
+struct ReqInfo<'a> {
+    req_type: ReqType,
+    req_path: &'a str,
+}
 
-fn main() {
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+fn split_req_info(info: &String) -> ReqInfo {
+    let req = info.split_whitespace().collect::<Vec<_>>();
 
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
-
-        handle_connection(stream);
-    }
+    let req_info = ReqInfo {
+        req_type: if req[0] == "GET" {
+            ReqType::GET
+        } else if req[0] == "POST" {
+            ReqType::POST
+        } else {
+            ReqType::UNKNOWN
+        },
+        req_path: req[1],
+    };
+    req_info
 }
 
 fn handle_connection(mut stream: TcpStream) {
@@ -40,29 +55,12 @@ fn handle_connection(mut stream: TcpStream) {
     stream.flush().unwrap();
 }
 
-enum ReqType {
-    GET,
-    POST,
-    UNKNOWN
-}
+fn main() {
+    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
 
-struct ReqInfo<'a> {
-    req_type : ReqType,
-    req_path : &'a str,
-}
+    for stream in listener.incoming() {
+        let stream = stream.unwrap();
 
-fn split_req_info(info: &String) -> ReqInfo {
-    let req = info.split_whitespace().collect::<Vec<_>>();
-
-    let req_info = ReqInfo {
-        req_type : if req[0] == "GET" {
-            ReqType::GET
-        } else if req[0] == "POST" {
-            ReqType::POST 
-        } else {
-            ReqType::UNKNOWN
-        },
-        req_path : req[1]
-    };
-    req_info
+        handle_connection(stream);
+    }
 }
