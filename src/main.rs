@@ -22,9 +22,9 @@ fn handle_connection(mut stream: TcpStream) {
 
     let string_stream = String::from_utf8_lossy(&buffer[..]);
 
-    println!("Request: {}", string_stream);
+    println!("Request: {}", &string_stream);
 
-    let string_stream = string_stream;
+    let string_stream = String::from_utf8(buffer[..].to_vec()).unwrap();
 
     let mut file = File::open("index.html").unwrap();
 
@@ -33,7 +33,8 @@ fn handle_connection(mut stream: TcpStream) {
 
     let response = format!("HTTP/1.1 200 OK\r\n\r\n{}", contents);
 
-    let req = split_req_info(string_stream);
+    let req = split_req_info(&string_stream);
+    println!("{}", &req.req_path);
 
     stream.write(response.as_bytes()).unwrap();
     stream.flush().unwrap();
